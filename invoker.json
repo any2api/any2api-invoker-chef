@@ -1,0 +1,69 @@
+{
+  "invoker_config": {
+    "type": "object",
+    "schema": {
+      "$schema": "http://json-schema.org/draft-04/schema#",
+      "type": "object",
+      "properties": {
+        "access": {
+          "description": "Currently supported access mechanisms: local, ssh",
+          "type": "string"
+        },
+        "min_runs": {
+          "description": "Min number of runs",
+          "type": "integer",
+          "default": 1
+        },
+        "max_runs": {
+          "description": "Max number of runs",
+          "type": "integer",
+          "default": 3
+        },
+        "dir": {
+          "description": "Base directory for placing executable on local or remote host",
+          "type": "string"
+        },
+        "ssh_port": {
+          "description": "SSH port",
+          "type": "integer",
+          "default": 22
+        },
+        "ssh_host": {
+          "description": "SSH host (DNS name or IP address)",
+          "type": "integer"
+        },
+        "ssh_user": {
+          "description": "SSH username",
+          "type": "string",
+          "default": "ubuntu"
+        },
+        "ssh_private_key": {
+          "description": "SSH private key",
+          "type": "string"
+        }
+      },
+      "required": [ "access" ]
+    }
+  },
+  "results": {
+    "run_list": {
+      "type": "object",
+      "schema": null,
+      "mapping": "file",
+      "file_path": "./out/run_list.json",
+      "description": "Chef run list used for invocation"
+    },
+    "ps": {
+      "type": "string",
+      "mapping": "file",
+      "file_path": "./out/ps_aux.txt",
+      "description": "Running processes after invocation"
+    },
+    "logs": {
+      "type": "string",
+      "mapping": "stdout",
+      "description": "Log messages put to stdout"
+    }
+  }
+}
+

@@ -1,0 +1,43 @@
+{
+  "name": "any2api-invoker-chef",
+  "version": "0.0.1",
+  "author": "Johannes Wettinger <mail@jojow.de>",
+  "description": "Chef cookbook invoker for any2api",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/any2api/any2api-invoker-chef"
+  },
+  "contributors": [
+    {
+      "name": "Johannes Wettinger",
+      "email": "mail@jojow.de"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "any2api",
+    "chef",
+    "cookbook",
+    "invoker"
+  ],
+  "preferGlobal": false,
+  "dependencies": {
+    "lodash": "~2.4.1",
+    "debug": "~2.1.0",
+    "async": "0.9.0",
+    "flat": "~1.3.0",
+    "uuid": "~2.0.1",
+    "fs-extra": "~0.12.0",
+    "any2api-util": "*",
+    "any2api-access": "*"
+  },
+  "scripts": {
+    "prepare-executable": "node ./prepare-executable.js",
+    "prepare-runtime": "sh ./prepare-runtime.sh",
+    "prestart": "type ssh >/dev/null 2>&1 || { echo >&2 \"ssh client missing\"; exit 1; }",
+    "start": "node ./invoke.js"
+  },
+  "engines": {
+    "node": ">= 0.10"
+  }
+}
