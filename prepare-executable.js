@@ -38,7 +38,7 @@ var downloadDeps = function(metadata, dir, done) {
 
 
 util.readInput(null, function(err, apiSpec) {
-  var execPath = path.resolve(apiSpec.apispec_path, '..', apiSpec.executable_path);
+  var execPath = path.resolve(apiSpec.apispec_path, '..', apiSpec.executable.path);
   var metadata = JSON.parse(fs.readFileSync(path.join(execPath, 'metadata.json')));
   var depsSubdir = 'cookbook_dependencies';
   var depsPath = path.join(execPath, depsSubdir);

@@ -67,30 +67,18 @@ util.readInput(null, function(err, spec, params) {
 
 
   var install = function(done) {
-    var metadata;
-    var cookbookName;
-    var cookbookDir;
+    var cookbookName = spec.executable.cookbook_name;
+    var cookbookDir = path.join(cookbooksDir, cookbookName);
 
     async.series([
       async.apply(access.writeFile, { path: chefConfigFile, content: chefConfig }),
-      async.apply(access.mkdir, { path: path.join(spec.executable_path, spec.dependencies_subdir) }),
-      async.apply(access.copy, { sourcePath: path.join(spec.executable_path, spec.dependencies_subdir), targetPath: cookbooksDir }),
-      function(callback) {
-        access.readFile({ path: path.join(spec.executable_path, 'metadata.json') }, function(err, content) {
-          if (err) return callback(err);
-
-          metadata = JSON.parse(content);
-          cookbookName = metadata.name;
-          cookbookDir = path.join(cookbooksDir, cookbookName);
-
-          callback();
-        });
-      },
+      async.apply(access.mkdir, { path: path.join(spec.executable.path, spec.dependencies_subdir) }),
+      async.apply(access.copy, { sourcePath: path.join(spec.executable.path, spec.dependencies_subdir), targetPath: cookbooksDir }),
       function(callback) {
         access.mkdir({ path: cookbookDir }, callback);
       },
       function(callback) {
-        access.copy({ sourcePath: spec.executable_path, targetPath: cookbookDir }, callback);
+        access.copy({ sourcePath: spec.executable.path, targetPath: cookbookDir }, callback);
       },
       function(callback) {
         access.remove({ path: path.join(cookbookDir, spec.dependencies_subdir) }, callback);
