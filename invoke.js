@@ -72,8 +72,8 @@ util.readInput(null, function(err, spec, params) {
 
     async.series([
       async.apply(access.writeFile, { path: chefConfigFile, content: chefConfig }),
-      async.apply(access.mkdir, { path: path.join(spec.executable.path, spec.dependencies_subdir) }),
-      async.apply(access.copy, { sourcePath: path.join(spec.executable.path, spec.dependencies_subdir), targetPath: cookbooksDir }),
+      async.apply(access.mkdir, { path: path.join(spec.executable.path, spec.executable.dependencies_subdir) }),
+      async.apply(access.copy, { sourcePath: path.join(spec.executable.path, spec.executable.dependencies_subdir), targetPath: cookbooksDir }),
       function(callback) {
         access.mkdir({ path: cookbookDir }, callback);
       },
@@ -81,7 +81,7 @@ util.readInput(null, function(err, spec, params) {
         access.copy({ sourcePath: spec.executable.path, targetPath: cookbookDir }, callback);
       },
       function(callback) {
-        access.remove({ path: path.join(cookbookDir, spec.dependencies_subdir) }, callback);
+        access.remove({ path: path.join(cookbookDir, spec.executable.dependencies_subdir) }, callback);
       },
       function(callback) {
         access.exec({ command: commands.install }, function(err, stdout, stderr) {

@@ -48,7 +48,7 @@ util.readInput(null, function(err, apiSpec) {
   downloadDeps(metadata, depsPath, function(err) {
     if (err) throw err;
 
-    apiSpec.dependencies_subdir = depsSubdir;
+    apiSpec.executable.dependencies_subdir = depsSubdir;
 
     fs.writeFileSync(apiSpec.apispec_path, JSON.stringify(apiSpec, null, 2));
   });
