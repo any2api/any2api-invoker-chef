@@ -1,4 +1,9 @@
 language: node_js
 node_js:
-  - "0.11"
-  - "0.10"
+- '0.11'
+- '0.10'
+deploy:
+  provider: npm
+  email: mail@jojow.de
+  api_key:
+    secure: 3HK2N9tyW+d1zw1bKllvlJAt5mmYpnfnN7FUiOfjiRUnykBYi72kJnr4mhqIahKsiRNkuoUqqmLDBjf0XtodLNlOIYrXdA5e7WFgemCExwexbHQHKGldI7gyAL2VOoLDAdd+CoTcUMpXln+j7zuDaIzYYSIUQNPmm5qEirn3dyg=
