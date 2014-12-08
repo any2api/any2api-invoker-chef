@@ -1,13 +1,13 @@
 {
-  "invoker_config": {
-    "type": "object",
-    "schema": {
+  "parameters_schema": {
+    "invoker_config": {
       "$schema": "http://json-schema.org/draft-04/schema#",
       "type": "object",
       "properties": {
         "access": {
           "description": "Currently supported access mechanisms: local, ssh",
-          "type": "string"
+          "type": "string",
+          "default": "local"
         },
         "min_runs": {
           "description": "Min number of runs",
@@ -18,10 +18,6 @@
           "description": "Max number of runs",
           "type": "integer",
           "default": 3
-        },
-        "dir": {
-          "description": "Base directory for placing executable on local or remote host",
-          "type": "string"
         },
         "ssh_port": {
           "description": "SSH port",
@@ -43,12 +39,19 @@
         }
       },
       "required": [ "access" ]
+    },
+    "run_list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     }
   },
-  "results": {
+  "results_schema": {
     "run_list": {
       "type": "object",
-      "schema": null,
+      "properties": null,
       "mapping": "file",
       "file_path": "./out/run_list.json",
       "description": "Chef run list used for invocation"

@@ -6,13 +6,13 @@ var fs = require('fs-extra');
 var async = require('async');
 var unflatten = require('flat').unflatten;
 var _ = require('lodash');
-var uuid = require('uuid');
+var lockFile = require('lockfile');
 
 var util = require('any2api-util');
 
 
 
-util.readInput(null, function(err, spec, params) {
+util.readInput(null, function(err, apiSpec, params) {
   if (err) throw err;
 
   if (!params.run_list) {
@@ -26,27 +26,42 @@ util.readInput(null, function(err, spec, params) {
   config.access = config.access || 'local';
   config.min_runs = config.min_runs || 1;
   config.max_runs = config.max_runs || 3;
-  config.dir = config.dir || '/tmp/any2api-invoker-chef';
-  
-  var access;
 
-  if (config.access === 'local') {
-    access = require('any2api-access').Local(config);
-  } else if (config.access === 'ssh') {
-    access = require('any2api-access').SSH(config);
-  } else {
-    console.error('access \'' + config.access + '\' not supported');
+  var runParams = params._;
+  delete params._;
+
+  //runParams.run_id = runParams.run_id || uuid.v4();
+  if (!runParams.run_path) {
+    console.error('_.run_path parameter missing');
 
     process.exit(1);
   }
 
-  var chefDir = path.join(config.dir, 'chef_data');
-  var cookbooksDir = path.join(config.dir, 'chef_data', 'cookbooks');
-  var rolesDir = path.join(config.dir, 'chef_data', 'roles');
+  var runOutputDir = path.join(runParams.run_path, 'out');
+  var baseDir = path.join('/', 'tmp', 'any2api-invoker-chef', runParams.executable_name);
 
-  var stateFile = path.join(config.dir, '.environment_installed');
-  var chefConfigFile = path.join(config.dir, 'chef.rb');
-  var runListFile = path.join(config.dir, 'run_list.json');
+  var executable = apiSpec.executables[runParams.executable_name];
+
+  // Invoker status and remote access (local, SSH, ...)
+  var invokerStatusFile = path.resolve(__dirname, 'invoker-status.json');
+  var invokerStatus = { hosts: {} };
+  var access;
+
+  // Lock
+  var lockWait = 5000;
+  var lockFilePath = path.resolve(__dirname, 'invoker-status.lock');
+
+  // Files and directories
+  var origExecDir = path.resolve(apiSpec.apispec_path, '..', executable.path);
+  var execDir = path.join(baseDir, 'executable');
+
+  var chefDir = path.join(baseDir, 'chef_data');
+  var cookbooksDir = path.join(baseDir, 'chef_data', 'cookbooks');
+  var rolesDir = path.join(baseDir, 'chef_data', 'roles');
+
+  var runStatusFile = path.join(baseDir, '.environment_installed');
+  var chefConfigFile = path.join(baseDir, 'chef.rb');
+  var runListFile = path.join(baseDir, 'run_list.json');
 
   var chefConfig = [
     'file_cache_path "' + chefDir + '"',
@@ -66,23 +81,77 @@ util.readInput(null, function(err, spec, params) {
 
 
 
-  var install = function(done) {
-    var cookbookName = spec.executable.cookbook_name;
-    var cookbookDir = path.join(cookbooksDir, cookbookName);
+  var prepare = function(done) {
+    var host = 'localhost';
+
+    if (config.access === 'local') {
+      access = require('any2api-access').Local(config);
+    } else if (config.access === 'ssh') {
+      access = require('any2api-access').SSH(config);
+
+      host = config.ssh_host;
+    } else {
+      return done(new Error('access \'' + config.access + '\' not supported'));
+    }
 
     async.series([
+      async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
+      function(callback) {
+        if (fs.existsSync(invokerStatusFile)) {
+          invokerStatus = JSON.parse(fs.readFileSync(invokerStatusFile, 'utf8'));
+        }
+
+        if (invokerStatus.hosts[host]) {
+          return callback(new Error('Chef invoker already running on ' + host));
+        } else {
+          invokerStatus.hosts[host] = 'running';
+        }
+
+        fs.writeFileSync(invokerStatusFile, JSON.stringify(invokerStatus), 'utf8');
+
+        delete invokerStatus.hosts[host];
+
+        callback();
+      },
+      async.apply(lockFile.unlock, lockFilePath)
+    ], done);
+  };
+
+  var install = function(done) {
+    var cookbookName = executable.cookbook_name;
+
+    var metadataPath = path.resolve(origExecDir, 'metadata.json');
+
+    if (!cookbookName && fs.existsSync(metadataPath)) {
+      var metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+
+      if (metadata.name) cookbookName = metadata.name;
+    }
+
+    if (!cookbookName) return done(new Error('cookbook name cannot be determined'));
+
+    var cookbookDir = path.join(cookbooksDir, cookbookName);
+
+    executable.dependencies_subdir = executable.dependencies_subdir || 'cookbook_dependencies';
+
+    async.series([
+      async.apply(access.mkdir, { path: baseDir }),
+      async.apply(access.mkdir, { path: chefDir }),
+      //async.apply(access.mkdir, { path: cookbooksDir }),
+      async.apply(access.mkdir, { path: rolesDir }),
+      async.apply(access.copyDirToRemote, { sourcePath: origExecDir, targetPath: execDir }),
       async.apply(access.writeFile, { path: chefConfigFile, content: chefConfig }),
-      async.apply(access.mkdir, { path: path.join(spec.executable.path, spec.executable.dependencies_subdir) }),
-      async.apply(access.copy, { sourcePath: path.join(spec.executable.path, spec.executable.dependencies_subdir), targetPath: cookbooksDir }),
+      async.apply(access.mkdir, { path: path.join(execDir, executable.dependencies_subdir, '..') }),
+      async.apply(access.move, { sourcePath: path.join(execDir, executable.dependencies_subdir), targetPath: cookbooksDir }),
       function(callback) {
         access.mkdir({ path: cookbookDir }, callback);
       },
       function(callback) {
-        access.copy({ sourcePath: spec.executable.path, targetPath: cookbookDir }, callback);
+        access.copy({ sourcePath: execDir, targetPath: cookbookDir }, callback);
       },
-      function(callback) {
-        access.remove({ path: path.join(cookbookDir, spec.executable.dependencies_subdir) }, callback);
-      },
+      //function(callback) {
+      //  access.remove({ path: path.join(cookbookDir, executable.dependencies_subdir) }, callback);
+      //},
       function(callback) {
         access.exec({ command: commands.install }, function(err, stdout, stderr) {
           if (stderr) console.error(stderr);
@@ -98,7 +167,7 @@ util.readInput(null, function(err, spec, params) {
           callback();
         });
       },
-      async.apply(access.writeFile, { path: stateFile, content: 'installed' })
+      async.apply(access.writeFile, { path: runStatusFile, content: 'installed' })
     ], done);
   };
 
@@ -134,8 +203,8 @@ util.readInput(null, function(err, spec, params) {
 
             // Write outputs
             async.series([
-              async.apply(fs.mkdirs, path.join('out')),
-              async.apply(fs.writeFile, path.join('out', 'run_list.json'), JSON.stringify(attributes)),
+              async.apply(fs.mkdirs, runOutputDir),
+              async.apply(fs.writeFile, path.resolve(runOutputDir, 'run_list.json'), JSON.stringify(attributes)),
               function(callback) {
                 access.exec({ command: 'ps aux' }, function(err, stdout, stderr) {
                   psOutput = stdout;
@@ -144,7 +213,7 @@ util.readInput(null, function(err, spec, params) {
                 });
               },
               function(callback) {
-                fs.writeFile(path.join('out', 'ps_aux.txt'), psOutput, callback);
+                fs.writeFile(path.resolve(runOutputDir, 'ps_aux.txt'), psOutput, callback);
               }
             ], done);
           }
@@ -153,29 +222,36 @@ util.readInput(null, function(err, spec, params) {
     });
   };
 
-  access.exists({ path: stateFile }, function(err, exists) {
-    if (err) throw err;
 
-    if (!exists) {
-      async.series([
-        async.apply(util.placeExecutable, { spec: spec, access: access, dir: path.join(config.dir, 'exec') }),
-        async.apply(access.mkdir, { path: chefDir }),
-        async.apply(access.mkdir, { path: cookbooksDir }),
-        async.apply(access.mkdir, { path: rolesDir }),
-        async.apply(install),
-        async.apply(run)
-      ],
-      function(err) {
-        access.terminate();
 
-        if (err) throw err;
+  var skipInstall = false;
+
+  async.series([
+    async.apply(prepare),
+    function(callback) {
+      access.exists({ path: runStatusFile }, function(err, exists) {
+        if (exists) skipInstall = true;
+
+        callback(err);
       });
-    } else {
-      run(function(err) {
-        access.terminate();
+    },
+    function(callback) {
+      if (skipInstall) return callback();
 
-        if (err) throw err;
-      });
-    }
+      install(callback);
+    },
+    async.apply(run)
+  ], function(err) {
+    async.series([
+      async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
+      async.apply(fs.writeFile, invokerStatusFile, JSON.stringify(invokerStatus), 'utf8'),
+      async.apply(lockFile.unlock, lockFilePath),
+      async.apply(access.remove, { path: baseDir }),
+      async.apply(access.terminate)
+    ], function(err2) {
+      if (err) throw err;
+
+      if (err2) console.error(err2);
+    });
   });
 });
