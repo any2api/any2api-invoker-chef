@@ -46,6 +46,7 @@ util.readInput(null, function(err, apiSpec, params) {
   var invokerStatusFile = path.resolve(__dirname, 'invoker-status.json');
   var invokerStatus = { hosts: {} };
   var access;
+  var host = 'localhost';
 
   // Lock
   var lockWait = 5000;
@@ -82,8 +83,6 @@ util.readInput(null, function(err, apiSpec, params) {
 
 
   var prepare = function(done) {
-    var host = 'localhost';
-
     if (config.access === 'local') {
       access = require('any2api-access').Local(config);
     } else if (config.access === 'ssh') {
@@ -108,8 +107,6 @@ util.readInput(null, function(err, apiSpec, params) {
         }
 
         fs.writeFileSync(invokerStatusFile, JSON.stringify(invokerStatus), 'utf8');
-
-        delete invokerStatus.hosts[host];
 
         callback();
       },
@@ -243,11 +240,17 @@ util.readInput(null, function(err, apiSpec, params) {
     async.apply(run)
   ], function(err) {
     async.series([
-      async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
-      async.apply(fs.writeFile, invokerStatusFile, JSON.stringify(invokerStatus), 'utf8'),
-      async.apply(lockFile.unlock, lockFilePath),
       async.apply(access.remove, { path: baseDir }),
-      async.apply(access.terminate)
+      async.apply(access.terminate),
+      async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
+      function(callback) {
+        invokerStatus = JSON.parse(fs.readFileSync(invokerStatusFile, 'utf8'));
+
+        delete invokerStatus.hosts[host];
+
+        fs.writeFileSync(invokerStatusFile, JSON.stringify(invokerStatus), 'utf8');
+      },
+      async.apply(lockFile.unlock, lockFilePath)
     ], function(err2) {
       if (err) throw err;
 
