@@ -96,20 +96,29 @@ util.readInput(null, function(err, apiSpec, params) {
     async.series([
       async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
       function(callback) {
-        if (fs.existsSync(invokerStatusFile)) {
-          invokerStatus = JSON.parse(fs.readFileSync(invokerStatusFile, 'utf8'));
-        }
+        if (!fs.existsSync(invokerStatusFile)) return callback();
 
+        fs.readFile(invokerStatusFile, 'utf8', function(err, content) {
+          if (err) return callback(err);
+
+          invokerStatus = JSON.parse(content);
+
+          callback();
+        });
+      },
+      function(callback) {
         if (invokerStatus.hosts[host]) {
-          return callback(new Error('Chef invoker already running on ' + host));
-        } else {
-          invokerStatus.hosts[host] = 'running';
+          var err = new Error('Chef invoker already running on ' + host);
+          host = null;
+
+          return callback(err);
         }
 
-        fs.writeFileSync(invokerStatusFile, JSON.stringify(invokerStatus), 'utf8');
+        invokerStatus.hosts[host] = 'running';
 
         callback();
       },
+      async.apply(fs.writeFile, invokerStatusFile, JSON.stringify(invokerStatus), 'utf8'),
       async.apply(lockFile.unlock, lockFilePath)
     ], done);
   };
@@ -221,21 +230,14 @@ util.readInput(null, function(err, apiSpec, params) {
 
 
 
-  var skipInstall = false;
-
   async.series([
     async.apply(prepare),
     function(callback) {
       access.exists({ path: runStatusFile }, function(err, exists) {
-        if (exists) skipInstall = true;
-
-        callback(err);
+        if (err) callback(err);
+        else if (!exists) install(callback);
+        else callback();
       });
-    },
-    function(callback) {
-      if (skipInstall) return callback();
-
-      install(callback);
     },
     async.apply(run)
   ], function(err) {
@@ -244,11 +246,15 @@ util.readInput(null, function(err, apiSpec, params) {
       async.apply(access.terminate),
       async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
       function(callback) {
+        if (!host) return callback();
+
         invokerStatus = JSON.parse(fs.readFileSync(invokerStatusFile, 'utf8'));
 
         delete invokerStatus.hosts[host];
 
         fs.writeFileSync(invokerStatusFile, JSON.stringify(invokerStatus), 'utf8');
+
+        callback();
       },
       async.apply(lockFile.unlock, lockFilePath)
     ], function(err2) {
