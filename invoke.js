@@ -72,11 +72,10 @@ util.readInput(null, function(err, apiSpec, params) {
 
   var commands = {
     install: [
-      'sudo apt-get -y update',
-      'sudo apt-get -y install curl',
-      'sudo yum -y install curl',
+      'if type apt-get > /dev/null; then sudo apt-get -y update && sudo apt-get -y install curl; fi',
+      'if type yum > /dev/null; then sudo yum -y install curl; fi',
       'curl -L https://www.opscode.com/chef/install.sh | sudo bash'
-    ].join(' ; '),
+    ].join(' && '),
     run: 'sudo chef-solo -c ' + chefConfigFile + ' -j ' + runListFile,
   };
 
@@ -141,6 +140,7 @@ util.readInput(null, function(err, apiSpec, params) {
     executable.dependencies_subdir = executable.dependencies_subdir || 'cookbook_dependencies';
 
     async.series([
+      async.apply(access.remove, { path: baseDir }),
       async.apply(access.mkdir, { path: baseDir }),
       async.apply(access.mkdir, { path: chefDir }),
       //async.apply(access.mkdir, { path: cookbooksDir }),
@@ -242,7 +242,7 @@ util.readInput(null, function(err, apiSpec, params) {
     async.apply(run)
   ], function(err) {
     async.series([
-      async.apply(access.remove, { path: baseDir }),
+      //async.apply(access.remove, { path: baseDir }),
       async.apply(access.terminate),
       async.apply(lockFile.lock, lockFilePath, { wait: lockWait }),
       function(callback) {
