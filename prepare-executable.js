@@ -2,6 +2,7 @@ var _ = require('lodash');
 var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
+var S = require('string');
 
 var util = require('any2api-util');
 
@@ -12,10 +13,19 @@ var downloadDeps = function(metadata, dir, done) {
 
   async.eachSeries(_.keys(metadata.dependencies), function(dep, callback) {
     var depDir = path.join(dir, dep);
+    var ver = metadata.dependencies[dep];
     
     if (fs.existsSync(depDir)) return callback();
 
-    var url = 'https://supermarket.getchef.com/cookbooks/' + dep + '/download';
+    var url = 'https://supermarket.chef.io/cookbooks/' + dep + '/download';
+
+    if (S(ver).startsWith('=')) {
+      ver = ver.substr(1).trim();
+
+      url = 'https://supermarket.chef.io/cookbooks/' + dep + '/versions/' + ver + '/download';
+    }
+
+    //TODO: if ver starts with '<' or '<=', look for corresponding version at https://supermarket.chef.io/api/v1/cookbooks/<NAME>
 
     util.download({ dir: depDir, url: url }, function(err) {
       if (err) {

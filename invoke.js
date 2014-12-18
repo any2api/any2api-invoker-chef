@@ -39,6 +39,7 @@ util.readInput(null, function(err, apiSpec, params) {
 
   var runOutputDir = path.join(runParams.run_path, 'out');
   var baseDir = path.join('/', 'tmp', 'any2api-invoker-chef', runParams.executable_name);
+  var chefStatusFile = path.join('/', 'opt', 'chef_installed');
 
   var executable = apiSpec.executables[runParams.executable_name];
 
@@ -76,7 +77,7 @@ util.readInput(null, function(err, apiSpec, params) {
       'if type yum > /dev/null; then sudo yum -y install curl; fi',
       'curl -L https://www.opscode.com/chef/install.sh | sudo bash'
     ].join(' && '),
-    run: 'sudo chef-solo -c ' + chefConfigFile + ' -j ' + runListFile,
+    run: 'sudo chef-solo -c ' + chefConfigFile + ' -j ' + runListFile
   };
 
 
@@ -159,6 +160,13 @@ util.readInput(null, function(err, apiSpec, params) {
       //  access.remove({ path: path.join(cookbookDir, executable.dependencies_subdir) }, callback);
       //},
       function(callback) {
+        access.exists({ path: chefStatusFile }, function(err, exists) {
+          if (err) callback(err);
+          else if (exists) done();
+          else callback();
+        });
+      },
+      function(callback) {
         access.exec({ command: commands.install }, function(err, stdout, stderr) {
           if (stderr) console.error(stderr);
           if (stdout) console.log(stdout);
@@ -170,7 +178,7 @@ util.readInput(null, function(err, apiSpec, params) {
             return callback(err);
           }
 
-          callback();
+          access.writeFile({ path: chefStatusFile, content: 'installed' }, callback);
         });
       },
       async.apply(access.writeFile, { path: runStatusFile, content: 'installed' })
@@ -220,7 +228,12 @@ util.readInput(null, function(err, apiSpec, params) {
               },
               function(callback) {
                 fs.writeFile(path.resolve(runOutputDir, 'ps_aux.txt'), psOutput, callback);
-              }
+              },
+              async.apply(util.collectResults, { apiSpec: apiSpec,
+                                                 executable_name: runParams.executable_name,
+                                                 localPath: runParams.run_path,
+                                                 remotePath: execDir,
+                                                 access: access })
             ], done);
           }
         });
@@ -258,9 +271,9 @@ util.readInput(null, function(err, apiSpec, params) {
       },
       async.apply(lockFile.unlock, lockFilePath)
     ], function(err2) {
-      if (err) throw err;
-
       if (err2) console.error(err2);
+
+      if (err) throw err;
     });
   });
 });
