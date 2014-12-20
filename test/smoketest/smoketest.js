@@ -3,7 +3,6 @@ var expect = chai.expect;
 var fs = require('fs-extra');
 var path = require('path');
 var async = require('async');
-//var _ = require('lodash');
 var util = require('any2api-util');
 
 var timeout = 1000 * 60 * 15; // 15 minutes
