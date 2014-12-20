@@ -1,6 +1,6 @@
 {
   "name": "any2api-invoker-chef",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "author": "Johannes Wettinger <mail@jojow.de>",
   "description": "Chef cookbook invoker for any2api",
   "repository": {
@@ -39,7 +39,7 @@
   "scripts": {
     "prepare-buildtime": "npm install",
     "prepare-executable": "node ./prepare-executable.js",
-    "prepare-runtime": "sh ./prepare-runtime.sh",
+    "prepare-runtime": "npm install && cd node_modules/any2api-access && npm run prepare-runtime",
     "prestart": "type ssh >/dev/null 2>&1 || { echo >&2 \"ssh client missing\"; exit 1; }",
     "start": "node ./invoke.js",
     "test": "mocha"
