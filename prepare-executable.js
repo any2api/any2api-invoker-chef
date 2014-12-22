@@ -3,6 +3,7 @@ var async = require('async');
 var fs = require('fs-extra');
 var path = require('path');
 var S = require('string');
+var log = require('verr-log')();
 
 var util = require('any2api-util');
 
@@ -48,7 +49,7 @@ var downloadDeps = function(metadata, dir, done) {
 
 
 util.readInput(null, function(err, apiSpec, params) {
-  if (err) throw err;
+  if (err) { log.error(err); process.exit(1); }
 
   var executable = apiSpec.executables[params._.executable_name];
   var execPath = path.resolve(apiSpec.apispec_path, '..', executable.path);
@@ -59,12 +60,12 @@ util.readInput(null, function(err, apiSpec, params) {
   fs.mkdirsSync(depsPath);
 
   downloadDeps(metadata, depsPath, function(err) {
-    if (err) throw err;
+    if (err) { log.error(err); process.exit(1); }
 
     executable.dependencies_subdir = depsSubdir;
 
     util.writeSpec({ apiSpec: apiSpec }, function(err) {
-      if (err) throw err;
+      if (err) { log.error(err); process.exit(1); }
     });
   });
 });
