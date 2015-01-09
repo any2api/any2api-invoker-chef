@@ -16,7 +16,6 @@ var apiSpecMysql = {
       "parameters_schema": {
         "run_list": {
           "type": "array",
-          "schema": null,
           "default": [
             "recipe[mysql::client]"
           ]
