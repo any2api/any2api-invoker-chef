@@ -44,7 +44,7 @@ var apiSpecMysql = {
   apispec_path: specPathMysql
 };
 
-var embeddedRun = {
+var embeddedInstance = {
   "parameters": {
     "run_list": [
       "recipe[embedded]"
@@ -126,12 +126,12 @@ describe('mysql cookbook', function() {
 
   it('invoke executable', function(done) {
     util.invokeExecutable({ apiSpec: apiSpecMysql,
-                            executable_name: 'mysql' }, function(err, run) {
+                            executable_name: 'mysql' }, function(err, instance) {
                               if (err) throw err;
 
-                              expect(run.finished).to.exist;
+                              expect(instance.finished).to.exist;
 
-                              console.log(run);
+                              console.log(instance);
 
                               done();
                             });
@@ -140,12 +140,12 @@ describe('mysql cookbook', function() {
   it('invoke embedded executable', function(done) {
     util.invokeExecutable({ apiSpec: apiSpecMysql,
                             invoker_name: 'chef',
-                            run: embeddedRun }, function(err, run) {
+                            instance: embeddedInstance }, function(err, instance) {
                               if (err) throw err;
 
-                              expect(run.finished).to.exist;
+                              expect(instance.finished).to.exist;
 
-                              console.log(run);
+                              console.log(instance);
 
                               done();
                             });
