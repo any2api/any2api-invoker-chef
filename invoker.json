@@ -55,6 +55,7 @@
       "default": []
     }
   },
+  "parameters_required": [ "run_list" ],
   "results_schema": {
     "run_list": {
       "type": "json_object",
