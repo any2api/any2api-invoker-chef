@@ -94,61 +94,71 @@ describe('mysql cookbook', function() {
   before(cleanup);
 
   it('prepare buildtime', function(done) {
-    util.prepareBuildtime({ apiSpec: apiSpecMysql,
-                            executable_name: 'mysql' }, function(err) {
-                              if (err) throw err;
-                              
-                              done();
-                            });
+    util.prepareBuildtime({
+      apiSpec: apiSpecMysql,
+      executable_name: 'mysql'
+    }, function(err) {
+      if (err) throw err;
+      
+      done();
+    });
   });
 
   it('prepare executable', function(done) {
-    util.prepareExecutable({ apiSpec: apiSpecMysql,
-                             executable_name: 'mysql' }, function(err, updatedSpec) {
-                               if (err) throw err;
+    util.prepareExecutable({
+      apiSpec: apiSpecMysql,
+      executable_name: 'mysql'
+    }, function(err, updatedSpec) {
+      if (err) throw err;
 
-                               apiSpecMysql = updatedSpec;
+      apiSpecMysql = updatedSpec;
 
-                               expect(updatedSpec.executables.mysql.prepared).to.be.true;
+      expect(updatedSpec.executables.mysql.prepared).to.be.true;
 
-                               done();
-                             });
+      done();
+    });
   });
 
   it('prepare runtime', function(done) {
-    util.prepareRuntime({ apiSpec: apiSpecMysql,
-                          executable_name: 'mysql' }, function(err) {
-                            if (err) throw err;
-                            
-                            done();
-                          });
+    util.prepareRuntime({
+      apiSpec: apiSpecMysql,
+      executable_name: 'mysql'
+    }, function(err) {
+      if (err) throw err;
+      
+      done();
+    });
   });
 
   it('invoke executable', function(done) {
-    util.invokeExecutable({ apiSpec: apiSpecMysql,
-                            executable_name: 'mysql' }, function(err, instance) {
-                              if (err) throw err;
+    util.runInstance({
+      apiSpec: apiSpecMysql,
+      executable_name: 'mysql'
+    }, function(err, instance) {
+      if (err) throw err;
 
-                              expect(instance.finished).to.exist;
+      expect(instance.finished).to.exist;
 
-                              console.log(instance);
+      console.log(instance);
 
-                              done();
-                            });
+      done();
+    });
   });
 
   it('invoke embedded executable', function(done) {
-    util.invokeExecutable({ apiSpec: apiSpecMysql,
-                            invoker_name: 'chef',
-                            instance: embeddedInstance }, function(err, instance) {
-                              if (err) throw err;
+    util.runInstance({
+      apiSpec: apiSpecMysql,
+      invoker_name: 'chef',
+      instance: embeddedInstance
+    }, function(err, instance) {
+      if (err) throw err;
 
-                              expect(instance.finished).to.exist;
+      expect(instance.finished).to.exist;
 
-                              console.log(instance);
+      console.log(instance);
 
-                              done();
-                            });
+      done();
+    });
   });
 
   after(cleanup);

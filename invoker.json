@@ -2,6 +2,7 @@
   "parameters_schema": {
     "invoker_config": {
       "type": "json_object",
+      "default": { "access": "local" },
       "json_schema": {
         "$schema": "http://json-schema.org/draft-04/schema#",
         "type": "object",
@@ -55,18 +56,17 @@
       "default": []
     }
   },
-  "parameters_required": [ "run_list" ],
+  "parameters_required": [ "invoker_config", "run_list" ],
   "results_schema": {
     "run_list": {
       "type": "json_object",
-      "mapping": "file",
-      "file_path": "./out/run_list.json",
       "description": "Chef run list used for invocation"
+    },
+    "num_of_runs": {
+      "type": "string"
     },
     "ps": {
       "type": "string",
-      "mapping": "file",
-      "file_path": "./out/ps_aux.txt",
       "description": "Running processes after invocation"
     },
     "logs": {

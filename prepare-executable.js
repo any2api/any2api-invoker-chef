@@ -48,11 +48,13 @@ var downloadDeps = function(metadata, dir, done) {
 
 
 
-util.readInput(null, function(err, apiSpec, params) {
+util.readInput(null, function(err, input) {
   if (err) { log.error(err); process.exit(1); }
 
-  var executable = apiSpec.executables[params._.executable_name];
-  var execPath = path.resolve(apiSpec.apispec_path, '..', executable.path);
+  if (!input.executable) { log.error('executable (cookbook) missing'); process.exit(1); }
+
+  var executable = input.executable;
+  var execPath = path.resolve(input.specPath, '..', executable.path);
   var metadata = JSON.parse(fs.readFileSync(path.join(execPath, 'metadata.json')));
   var depsSubdir = 'cookbook_dependencies';
   var depsPath = path.join(execPath, depsSubdir);
@@ -62,10 +64,12 @@ util.readInput(null, function(err, apiSpec, params) {
   downloadDeps(metadata, depsPath, function(err) {
     if (err) { log.error(err); process.exit(1); }
 
-    executable.dependencies_subdir = depsSubdir;
+    process.exit();
+
+    /*executable.dependencies_subdir = depsSubdir;
 
     util.writeSpec({ apiSpec: apiSpec }, function(err) {
       if (err) { log.error(err); process.exit(1); }
-    });
+    });*/
   });
 });
