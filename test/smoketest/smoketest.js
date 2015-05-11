@@ -41,7 +41,7 @@ var apiSpecMysql = {
       "expose": true
     }
   },
-  apispec_path: specPathMysql
+  path: specPathMysql
 };
 
 var embeddedInstance = {
@@ -96,7 +96,7 @@ describe('mysql cookbook', function() {
   it('prepare buildtime', function(done) {
     util.prepareBuildtime({
       apiSpec: apiSpecMysql,
-      executable_name: 'mysql'
+      executableName: 'mysql'
     }, function(err) {
       if (err) throw err;
       
@@ -107,7 +107,7 @@ describe('mysql cookbook', function() {
   it('prepare executable', function(done) {
     util.prepareExecutable({
       apiSpec: apiSpecMysql,
-      executable_name: 'mysql'
+      executableName: 'mysql'
     }, function(err, updatedSpec) {
       if (err) throw err;
 
@@ -122,7 +122,7 @@ describe('mysql cookbook', function() {
   it('prepare runtime', function(done) {
     util.prepareRuntime({
       apiSpec: apiSpecMysql,
-      executable_name: 'mysql'
+      executableName: 'mysql'
     }, function(err) {
       if (err) throw err;
       
@@ -133,7 +133,7 @@ describe('mysql cookbook', function() {
   it('invoke executable', function(done) {
     util.runInstance({
       apiSpec: apiSpecMysql,
-      executable_name: 'mysql'
+      executableName: 'mysql'
     }, function(err, instance) {
       if (err) throw err;
 
@@ -148,7 +148,7 @@ describe('mysql cookbook', function() {
   it('invoke embedded executable', function(done) {
     util.runInstance({
       apiSpec: apiSpecMysql,
-      invoker_name: 'chef',
+      invokerName: 'chef',
       instance: embeddedInstance
     }, function(err, instance) {
       if (err) throw err;

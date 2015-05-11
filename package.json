@@ -1,6 +1,6 @@
 {
   "name": "any2api-invoker-chef",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "Johannes Wettinger <mail@jojow.de>",
   "description": "Chef cookbook invoker for any2api",
   "repository": {
@@ -27,6 +27,7 @@
     "lockfile": "~1.0.0",
     "string": "~3.0.0",
     "verr-log": "~1.0.0",
+    "fs-extra": "~0.18.3",
     "any2api-util": "*",
     "any2api-access": "*"
   },
