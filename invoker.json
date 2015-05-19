@@ -63,7 +63,7 @@
       "description": "Chef run list used for invocation"
     },
     "num_of_runs": {
-      "type": "string"
+      "type": "number"
     },
     "ps": {
       "type": "string",
