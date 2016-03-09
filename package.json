@@ -43,8 +43,5 @@
     "prestart": "type ssh >/dev/null 2>&1 || { echo >&2 \"ssh client missing\"; exit 1; }",
     "start": "node ./invoke.js",
     "test": "mocha"
-  },
-  "engines": {
-    "node": ">= 0.10"
   }
 }
