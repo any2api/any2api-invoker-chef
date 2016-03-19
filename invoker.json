@@ -7,11 +7,6 @@
         "$schema": "http://json-schema.org/draft-04/schema#",
         "type": "object",
         "properties": {
-          "access": {
-            "description": "Currently supported access mechanisms: local, ssh",
-            "type": "string",
-            "default": "local"
-          },
           "min_runs": {
             "description": "Min number of runs",
             "type": "integer",
@@ -22,6 +17,27 @@
             "type": "integer",
             "default": 3
           },
+          "sudo_all": {
+            "description": "Use sudo for all actions",
+            "type": "boolean"
+          },
+          "sudo_cmd": {
+            "description": "Use sudo to execute command only",
+            "type": "boolean"
+          },
+          "sudo_user": {
+            "description": "Username for sudo, if other than root",
+            "type": "string"
+          },
+          "sudo_password": {
+            "description": "Password for sudo, if required",
+            "type": "string"
+          },
+          "access": {
+            "description": "Currently supported access mechanisms: local, ssh",
+            "type": "string",
+            "default": "local"
+          },
           "ssh_port": {
             "description": "SSH port",
             "type": "integer",
@@ -29,7 +45,7 @@
           },
           "ssh_host": {
             "description": "SSH host (DNS name or IP address)",
-            "type": "integer"
+            "type": "string"
           },
           "ssh_user": {
             "description": "SSH username",
